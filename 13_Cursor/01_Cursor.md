@@ -53,7 +53,35 @@ DEALLOCATE PREPARE cursor_name;
 
 Let’s create a stored procedure that uses a cursor to process employee salaries and give a raise to each employee.
 
-1. **Creating the Procedure with Cursor**:
+Your stored procedure `RaiseEmployeeSalaries()` is well-structured for processing employee salary updates using a cursor. Let's walk through the entire process, including creating the `employees` table, inserting records, and executing the procedure.
+
+### Step 1: Create the Employees Table
+
+First, we will create the `employees` table:
+
+```sql
+CREATE TABLE employees (
+    employee_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_name VARCHAR(100),
+    salary DECIMAL(10, 2)
+);
+```
+
+### Step 2: Insert Records into the Table
+
+Next, let's insert some sample records into the `employees` table:
+
+```sql
+INSERT INTO employees (employee_name, salary) VALUES
+('Alice', 50000),
+('Bob', 60000),
+('Charlie', 70000),
+('Diana', 80000);
+```
+
+### Step 3: Create the RaiseEmployeeSalaries Procedure
+
+Now, we can use your cursor-based procedure to raise employee salaries by 10%. You've already provided the procedure code, but just for clarity, here it is again:
 
 ```sql
 DELIMITER //
@@ -96,18 +124,93 @@ END //
 DELIMITER ;
 ```
 
-**Explanation**:
-- The procedure `RaiseEmployeeSalaries` uses a cursor to iterate through the `employees` table.
-- It fetches each employee's ID and salary, applies a 10% raise, and updates the record.
+### Step 4: Execute the Procedure
 
-2. **Executing the Procedure**:
-
-To execute the procedure and apply the salary raises:
+Now, you can call the procedure to apply the salary raises:
 
 ```sql
 CALL RaiseEmployeeSalaries();
 ```
 
+### Step 5: Verify the Salary Updates
+
+To verify that the salaries have been updated, you can run a simple `SELECT` query:
+
+```sql
+SELECT * FROM employees;
+```
+
+This should show the updated salaries, reflecting the 10% increase.
+
+### Complete Example
+
+Putting it all together, here’s the complete SQL script:
+
+```sql
+-- Step 1: Create the employees table
+CREATE TABLE employees (
+    employee_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_name VARCHAR(100),
+    salary DECIMAL(10, 2)
+);
+
+-- Step 2: Insert records into the table
+INSERT INTO employees (employee_name, salary) VALUES
+('Alice', 50000),
+('Bob', 60000),
+('Charlie', 70000),
+('Diana', 80000);
+
+-- Step 3: Create the RaiseEmployeeSalaries procedure
+DELIMITER //
+
+CREATE PROCEDURE RaiseEmployeeSalaries()
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE emp_id INT;
+    DECLARE emp_salary DECIMAL(10,2);
+    
+    -- Declare the cursor
+    DECLARE employee_cursor CURSOR FOR 
+        SELECT employee_id, salary FROM employees;
+
+    -- Declare a handler for the end of the cursor
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Open the cursor
+    OPEN employee_cursor;
+
+    -- Loop through the cursor
+    read_loop: LOOP
+        -- Fetch data into variables
+        FETCH employee_cursor INTO emp_id, emp_salary;
+        
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Give a 10% raise
+        UPDATE employees
+        SET salary = emp_salary * 1.10
+        WHERE employee_id = emp_id;
+    END LOOP;
+
+    -- Close the cursor
+    CLOSE employee_cursor;
+END //
+
+DELIMITER ;
+
+-- Step 4: Execute the procedure to raise salaries
+CALL RaiseEmployeeSalaries();
+
+-- Step 5: Verify the salary updates
+SELECT * FROM employees;
+```
+
+### Conclusion
+
+This complete example shows how to create a table, insert records, define a stored procedure with a cursor, and execute it to update employee salaries. Feel free to modify the procedure or data as needed for your specific requirements!
 ### Advantages of Using Cursors
 
 1. **Fine-Grained Control**: Cursors provide the ability to handle data one row at a time, which can be essential for complex logic.
